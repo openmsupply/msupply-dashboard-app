@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/simple-datasource-backend/pkg/auth"
@@ -152,6 +153,7 @@ func (panel *TablePanel) GetData(authConfig auth.AuthConfig) error {
 	}
 
 	url := authConfig.AuthURL() + "/api/tsdb/query"
+	log.DefaultLogger.Debug(fmt.Sprintf("GetData: url: %s", url));
 	response, err := http.Post(url, "application/json", body)
 	if err != nil {
 		log.DefaultLogger.Error("GetData: http.Post: " + err.Error())

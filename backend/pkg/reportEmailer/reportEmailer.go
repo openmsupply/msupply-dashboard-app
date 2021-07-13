@@ -68,6 +68,9 @@ func (re *ReportEmailer) cleanup(schedules []dbstore.Schedule) {
 }
 
 func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *auth.AuthConfig, datasourceID int, em emailer.Emailer) error {
+
+	log.DefaultLogger.Debug("ReportEmailer.createReport: start")
+
 	emails := make(map[string][]string)
 	panels := make(map[string][]api.TablePanel)
 
@@ -75,18 +78,24 @@ func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *aut
 	if err != nil {
 		log.DefaultLogger.Error("ReportEmailer.createReport: ReportGroupFromSchedule: " + err.Error())
 		return err
+	} else {
+		log.DefaultLogger.Debug("ReportEmailer.createReport: ReportGroupFromSchedule:", reportGroup)
 	}
 
 	userIDs, err := re.sql.GroupMemberUserIDs(*reportGroup)
 	if err != nil {
 		log.DefaultLogger.Error("ReportEmailer.createReport: GroupMemberUserIDs: " + err.Error())
 		return err
+	} else {
+		log.DefaultLogger.Debug("ReportEmailer.createReport: GroupMemberUserIDs:", userIDs)
 	}
 
 	emailsFromUsers, err := api.GetEmails(*authConfig, userIDs, datasourceID)
 	if err != nil {
 		log.DefaultLogger.Error("ReportEmailer.createReport: emailsFromUsers: " + err.Error())
 		return err
+	} else {
+		log.DefaultLogger.Debug("ReportEmailer.createReport: GetEmails:", emailsFromUsers)
 	}
 
 	emails[schedule.ID] = emailsFromUsers
@@ -95,6 +104,8 @@ func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *aut
 	if err != nil {
 		log.DefaultLogger.Error("ReportEmailer.createReport: GetReportContent: " + err.Error())
 		return err
+	} else {
+		log.DefaultLogger.Debug("ReportEmailer.createReport: GetReportContent:", reportContent)
 	}
 
 	panels[schedule.ID] = []api.TablePanel{}
@@ -109,6 +120,8 @@ func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *aut
 		if err != nil {
 			log.DefaultLogger.Error("ReportEmailer.createReport: NewDashboard: " + err.Error())
 			return err
+		} else {
+			log.DefaultLogger.Debug("ReportEmailer.createReport: NewDashboard:", dashboard)
 		}
 
 		panel := dashboard.Panel(content.PanelID)
@@ -119,14 +132,18 @@ func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *aut
 	}
 
 	templatePath := reporter.GetFilePath("template")
+	log.DefaultLogger.Debug("ReportEmailer.createReport: templatePath:", templatePath)
 	reporter := reporter.NewReporter(templatePath)
 
+	log.DefaultLogger.Debug("ReportEmailer.createReport: panels being used: ", panels)
 	for scheduleID, reportSheetPanels := range panels {
 		schedule, err := re.sql.GetSchedule(scheduleID)
+
 		if err != nil {
 			log.DefaultLogger.Error("ReportEmailer: GetSchedule: Could not create report to send.", err.Error())
 			bugsnag.Notify(err)
 		} else {
+			log.DefaultLogger.Debug(fmt.Sprintf("ReportEmailer.createReport: schedule: %s", schedule.Name))
 			report := reporter.CreateNewReport(scheduleID, schedule.Name)
 			report.SetSheets(reportSheetPanels)
 			err := report.Write(*authConfig)
@@ -144,6 +161,7 @@ func (re *ReportEmailer) CreateReport(schedule dbstore.Schedule, authConfig *aut
 			bugsnag.Notify(err)
 		} else {
 			attachmentPath := reporter.GetFilePath(schedule.Name)
+			log.DefaultLogger.Debug("ReportEmailer.createReport: attachmentPath:", attachmentPath)
 			em.BulkCreateAndSend(attachmentPath, recipientEmails, schedule.Name, schedule.Description)
 		}
 	}

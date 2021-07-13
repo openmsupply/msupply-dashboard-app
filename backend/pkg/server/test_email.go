@@ -20,13 +20,17 @@ func (server *HttpServer) testEmail(rw http.ResponseWriter, request *http.Reques
 		log.DefaultLogger.Error("testEmail: auth.NewEmailConfig: ", err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		panic(err)
+	} else {
+		log.DefaultLogger.Debug("testEmail: emailConfig:", emailConfig)
 	}
 
 	authConfig, err := auth.NewAuthConfig(server.db)
 	if err != nil {
-		log.DefaultLogger.Error("textEmail: auth.NewAuthConfig: ", err.Error())
+		log.DefaultLogger.Error("testEmail: auth.NewAuthConfig: ", err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		panic(err)
+	} else {
+		log.DefaultLogger.Debug("testEmail: authConfig:", authConfig)
 	}
 
 	settings, err := server.db.GetSettings()
@@ -34,6 +38,8 @@ func (server *HttpServer) testEmail(rw http.ResponseWriter, request *http.Reques
 		log.DefaultLogger.Error("testEmail: db.GetSettings: ", err.Error())
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		panic(err)
+	} else {
+		log.DefaultLogger.Debug("testEmail: db.getSettings:", settings)
 	}
 
 	schedule, err := server.db.GetSchedule(id)
@@ -41,6 +47,8 @@ func (server *HttpServer) testEmail(rw http.ResponseWriter, request *http.Reques
 		log.DefaultLogger.Error("testData: server.db.GetSchedule: ", err.Error())
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		panic(err)
+	} else {
+		log.DefaultLogger.Debug("testEmail: schedule:", schedule)
 	}
 
 	em := emailer.New(emailConfig)

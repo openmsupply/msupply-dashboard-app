@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
@@ -71,6 +72,7 @@ func NewQueryResponse(response *http.Response) (*QueryResponse, error) {
 		log.DefaultLogger.Error("NewQueryResponse: ioutil.ReadAll: " + err.Error())
 		return nil, err
 	}
+	log.DefaultLogger.Debug(fmt.Sprintf("NewQueryResponse: body: %s", body));
 
 	var qr QueryResponse
 	err = json.Unmarshal(body, &qr)
